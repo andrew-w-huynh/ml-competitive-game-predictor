@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NBA Matchup Predictor</title>
+    <style>
+        body {
+            background-color: #2c2c2c;
+            color: white;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        h1 {
+            text-align: center;
+            margin-top: 20px;
+        }
+        form {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #3c3c3c;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .input-container {
+            position: relative;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        .input-container img {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 24px;
+            display: none;
+        }
+        .input-container input[type="text"] {
+            width: calc(100% - 50px); /* Adjusted to account for padding and logo */
+            padding: 10px 10px 10px 40px; /* Add padding to leave space for the logo */
+            border: none;
+            border-radius: 4px;
+            background-color: #4c4c4c;
+            color: white;
+        }
+        .autocomplete-suggestions {
+            position: absolute;
+            background-color: #4c4c4c;
+            border: 1px solid #007bff;
+            border-radius: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .autocomplete-suggestion {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            cursor: pointer;
+        }
+        .autocomplete-suggestion img {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+            border-radius: 50%;
+        }
+        .autocomplete-suggestion:hover {
+            background-color: #007bff;
+            color: white;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #3c3c3c;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        #result img {
+            width: 80px;
+            height: 80px;
+            margin: 10px;
+            border-radius: 50%;
+            border: 2px solid #007bff;
+        }
+        #result .team {
+            display: inline-block;
+            margin: 10px;
+            text-align: center;
+        }
+        #result .team-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        #result .prediction-details {
+            margin-top: 20px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <h1>NBA Matchup Predictor</h1>
+    <form id="prediction-form">
+        <label for="team1">First Team:</label>
+        <div class="input-container">
+            <img id="team1-logo" src="" alt="">
+            <input type="text" id="team1" name="team1" autocomplete="off" required>
+        </div>
+        <div id="team1-suggestions" class="autocomplete-suggestions"></div>
+        <label for="team2">Second Team:</label>
+        <div class="input-container">
+            <img id="team2-logo" src="" alt="">
+            <input type="text" id="team2" name="team2" autocomplete="off" required>
+        </div>
+        <div id="team2-suggestions" class="autocomplete-suggestions"></div>
+        <button type="submit">Predict</button>
+    </form>
+    <div id="result"></div>
+    <script>
+        const teams = [
+            "Atlanta Hawks", "Boston Celtics", "Brooklyn Nets", "Charlotte Hornets", 
+            "Chicago Bulls", "Cleveland Cavaliers", "Dallas Mavericks", "Denver Nuggets", 
+            "Detroit Pistons", "Golden State Warriors", "Houston Rockets", "Indiana Pacers", 
+            "Los Angeles Clippers", "Los Angeles Lakers", "Memphis Grizzlies", "Miami Heat", 
+            "Milwaukee Bucks", "Minnesota Timberwolves", "New Orleans Pelicans", "New York Knicks", 
+            "Oklahoma City Thunder", "Orlando Magic", "Philadelphia 76ers", "Phoenix Suns", 
+            "Portland Trail Blazers", "Sacramento Kings", "San Antonio Spurs", "Toronto Raptors", 
+            "Utah Jazz", "Washington Wizards"
+        ];
+
+        function setupAutocomplete(inputId, suggestionsId) {
+            const input = document.getElementById(inputId);
+            const suggestions = document.getElementById(suggestionsId);
+            const logo = document.getElementById(`${inputId}-logo`);
+
+            input.addEventListener("input", () => {
+                const query = input.value.toLowerCase();
+                suggestions.innerHTML = "";
+                if (query) {
+                    const matches = teams.filter(team => team.toLowerCase().includes(query));
+                    matches.forEach(match => {
+                        const div = document.createElement("div");
+                        div.classList.add("autocomplete-suggestion");
+
+                        const img = document.createElement("img");
+                        const mascot = match.split(" ").pop().toLowerCase();
+                        img.src = `logos/${mascot}.svg`;
+                        img.alt = `${match} logo`;
+
+                        const span = document.createElement("span");
+                        span.textContent = match;
+
+                        div.appendChild(img);
+                        div.appendChild(span);
+
+                        div.addEventListener("click", () => {
+                            input.value = match;
+                            suggestions.innerHTML = "";
+
+                            // Update the logo inside the input field
+                            logo.src = `logos/${mascot}.svg`;
+                            logo.alt = `${match} logo`;
+                            logo.style.display = "block";
+                        });
+                        suggestions.appendChild(div);
+                    });
+                }
+            });
+
+            document.addEventListener("click", (e) => {
+                if (!suggestions.contains(e.target) && e.target !== input) {
+                    suggestions.innerHTML = "";
+                }
+            });
+        }
+
+        setupAutocomplete("team1", "team1-suggestions");
+        setupAutocomplete("team2", "team2-suggestions");
+
+        document.getElementById('prediction-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const team1 = document.getElementById('team1').value;
+            const team2 = document.getElementById('team2').value;
+            const response = await fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ team1, team2 })
+            });
+            const result = await response.json();
+            const resultDiv = document.getElementById('result');
+            if (result.error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${result.error}</p>`;
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="team">
+                        <img src="logos/${team1.split(" ").pop().toLowerCase()}.svg" alt="${team1} logo">
+                        <div class="team-name">${team1}</div>
+                    </div>
+                    <div class="team">
+                        <img src="logos/${team2.split(" ").pop().toLowerCase()}.svg" alt="${team2} logo">
+                        <div class="team-name">${team2}</div>
+                    </div>
+                    <div class="prediction-details">
+                        <p><strong>Winner:</strong> ${result.winner}</p>
+                        <p><strong>Win Confidence:</strong> ${(result.win_confidence * 100).toFixed(2)}%</p>
+                        <p><strong>Predicted Score:</strong> ${team1} ${result.team1_score.toFixed(0)} - ${team2} ${result.team2_score.toFixed(0)}</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

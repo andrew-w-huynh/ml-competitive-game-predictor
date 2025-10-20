@@ -1,0 +1,1 @@
+Run gen_models to generate the Pickle models, then run app.py, then the site should be at localhost:5000
